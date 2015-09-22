@@ -100,7 +100,7 @@ define([
         },
 
         _updateText: function (value) {
-            var str = this.complexityPattern.split("${0}").join(Math.round(value));
+            var str = this.complexityPattern.split("{0}").join(Math.round(value));
 
             dojoHtml.set(this.progressNode, str);
         },
