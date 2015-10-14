@@ -1,17 +1,17 @@
 /*
-    PasswordComplexity
+    PasswordStrengthGage
     ========================
 
-    @file      : PasswordComplexity.js
-    @version   : 0.1
+    @file      : PasswordStrengthGage.js
+    @version   : 0.3
     @author    : Chad Evans
-    @date      : 22 Sep 2015
+    @date      : 14 Oct 2015
     @copyright : 2015, Mendix B.v.
     @license   : Apache v2
 
     Documentation
     ========================
-    Adding password complexity feedback, based on https://www.danpalmer.me/jquery-complexify/.
+    Adding password strength feedback, based on https://www.danpalmer.me/jquery-complexify/.
 */
 
 // Required module list. Remove unnecessary modules, you can always get them back from the boilerplate.
@@ -31,9 +31,9 @@ define([
     "dojo/text",
     "dojo/html",
     "dojo/_base/event",
-    "PasswordComplexity/lib/jquery-1.11.2",
-    "PasswordComplexity/lib/jquery.complexify",
-    "dojo/text!PasswordComplexity/widget/template/PasswordComplexity.html"
+    "PasswordStrengthGage/lib/jquery-1.11.2",
+    "PasswordStrengthGage/lib/jquery.complexify",
+    "dojo/text!PasswordStrengthGage/widget/template/PasswordStrengthGage.html"
 ], function (declare, _WidgetBase, _TemplatedMixin, dom, dojoDom, dojoProp, dojoGeometry, dojoClass, dojoStyle,
     dojoConstruct, dojoArray, dojoLang, dojoText, dojoHtml, dojoEvent,
     _jQuery, _complexify, widgetTemplate) {
@@ -52,7 +52,7 @@ define([
 
 
     // Declare widget's prototype.
-    return declare("PasswordComplexity.widget.PasswordComplexity", [_WidgetBase, _TemplatedMixin], {
+    return declare("PasswordStrengthGage.widget.PasswordStrengthGage", [_WidgetBase, _TemplatedMixin], {
         // _TemplatedMixin will create our dom node using this HTML template.
         templateString: widgetTemplate,
 
@@ -62,7 +62,10 @@ define([
         // Parameters configured in the Modeler.
         passwordSelector: "",
         complexityPattern: "",
+        minimumChars: 8,
         useBanList: true,
+        strengthFactor: 1,
+        increaseStrength: true,
 
         // Internal variables. Non-primitives created in the prototype are shared between all widget instances.
         _options: null,
@@ -91,8 +94,19 @@ define([
         _setupEvents: function () {
             dojoClass.toggle(this.progressNode, "progress-bar-danger");
             this._updateText(0);
+            
+            var modFactor = this.strengthFactor > 10 ? 10 :
+                this.strengthFactor < 1 ? 1 : this.strengthFactor;
+            
+            if (!this.increaseStrength) {
+                // change to a float to decrease the complexity
+                modFactor = 1.0 - (modFactor / 10);
+            }
 
-            this._options = {};
+            this._options = {
+                minimumChars: this.minimumChars,
+                strengthScaleFactor: modFactor
+            };
 
             if (this.useBanList) {
                 this._options.bannedPasswords = MX_COMPLEXIFY_BANLIST;
@@ -108,18 +122,20 @@ define([
         // Rerender the interface.
         _updateRendering: function () {
             $(this.passwordSelector).complexify(this._options, dojoLang.hitch(this, function (valid, complexity) {
+                var displayComplexity = complexity;
+                
                 dojoClass.toggle(this.progressNode, "progress-bar-success", valid);
                 dojoClass.toggle(this.progressNode, "progress-bar-danger", !valid);
                 dojoStyle.set(this.progressNode, {
-                    width: complexity + "%"
+                    width: displayComplexity + "%"
                 });
 
-                this._updateText(complexity);
+                this._updateText(displayComplexity);
             }));
         }
     });
 });
 
-require(["PasswordComplexity/widget/PasswordComplexity"], function () {
+require(["PasswordStrengthGage/widget/PasswordStrengthGage"], function () {
     "use strict";
 });
